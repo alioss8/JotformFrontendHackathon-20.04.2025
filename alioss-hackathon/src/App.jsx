@@ -5,6 +5,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const formID = "251074309767967";
   const apiKey = "1bd04b0cb7e62c17a93d891d67b80344";
@@ -17,11 +18,14 @@ const App = () => {
         const data = await response.json();
         
         if (data?.content?.products) {
-          setProducts(data.content.products.map((p, i) => ({ 
-            ...p, 
-            id: p.id || `product-${i}` 
-          })));
+          setProducts(
+            data.content.products.map((p, i) => ({
+              ...p,
+              id: p.id || `product-${i}`,
+            }))
+          );
         }
+        
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       } finally {
@@ -57,6 +61,15 @@ const App = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
+  // filtreleme işlemi
+  const filteredProducts = products.filter(product => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      (product.description && product.description.toLowerCase().includes(searchLower))
+    );
+  });
+
   return (
     <div style={{ 
       padding: "20px", 
@@ -65,20 +78,59 @@ const App = () => {
       margin: "0 auto",
       minHeight: "100vh"
     }}>
-      <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Jotform Ürünleri</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Ürünler</h1>
+
+      // search bar 
+      <div style={{
+        margin: "0 auto 30px auto",
+        maxWidth: "500px",
+        position: "relative"
+      }}>
+        <input
+          type="text"
+          placeholder="Ürün ara..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px 20px",
+            fontSize: "16px",
+            border: "1px solid #ddd",
+            borderRadius: "25px",
+            outline: "none",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          }}
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            style={{
+              position: "absolute",
+              right: "15px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "18px",
+              color: "#999"
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <p>Yükleniyor...</p>
-        </div>
-      ) : products.length > 0 ? (
+        <p style={{ textAlign: "center" }}>Yükleniyor...</p>
+      ) : filteredProducts.length > 0 ? (
         <div style={{ 
           display: "grid", 
           gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
           gap: "25px",
           padding: "10px"
         }}>
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const imageUrl = product.images || product.images?.large || product.images?.medium;
             const finalImageUrl = imageUrl?.split('?')[0];
             const isExpanded = expandedProduct === product.id;
@@ -86,6 +138,7 @@ const App = () => {
             return (
               <div
                 key={product.id}
+                onClick={() => toggleExpand(product.id)}
                 style={{
                   border: "1px solid #e0e0e0",
                   borderRadius: "12px",
@@ -98,7 +151,6 @@ const App = () => {
                   zIndex: isExpanded ? 10 : 1,
                   transform: isExpanded ? "scale(1.03)" : "scale(1)"
                 }}
-                onClick={() => toggleExpand(product.id)}
               >
                 {finalImageUrl ? (
                   <div style={{
@@ -132,37 +184,23 @@ const App = () => {
                   </div>
                 )}
 
-                <h2 style={{ 
-                  margin: "0 0 10px 0",
-                  fontSize: "1.2rem",
-                  color: "#333"
-                }}>
-                  {product.name} 
-                  
+                <h2 style={{ margin: "0 0 10px 0", fontSize: "1.2rem" }}>
+                  {product.name}
                 </h2>
                 
                 {isExpanded && (
-                  <div style={{ marginTop: "15px" }}>
-                    <p style={{ 
-                      margin: "0 0 15px 0",
-                      color: "#555",
-                      lineHeight: "1.5"
-                    }}>
+                  <>
+                    <p style={{ margin: "0 0 15px 0", color: "#555" }}>
                       {product.description || "Açıklama bulunmamaktadır."}
                     </p>
                     
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      alignItems: "center",
-                      marginTop: "20px"
+                      alignItems: "center"
                     }}>
-                      <p style={{ 
-                        fontSize: "1.3rem", 
-                        fontWeight: "bold",
-                        color: "#2c3e50"
-                      }}>
-                        {product.price} {product.currency}
+                      <p style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
+                        Price: {product.price} {product.currency}
                       </p>
                       
                       <button
@@ -178,27 +216,18 @@ const App = () => {
                           borderRadius: "6px",
                           cursor: "pointer",
                           fontSize: "1rem",
-                          fontWeight: "600",
-                          transition: "background-color 0.2s",
-                          ":hover": {
-                            backgroundColor: "#3e8e41"
-                          }
+                          fontWeight: "600"
                         }}
                       >
                         Sepete Ekle
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {!isExpanded && (
-                  <p style={{ 
-                    margin: "10px 0 0 0",
-                    fontSize: "1.1rem",
-                    fontWeight: "bold",
-                    color: "#2c3e50"
-                  }}>
-                    {product.price} {product.currency}
+                  <p style={{ margin: "10px 0 0 0", fontWeight: "bold" }}>
+                    Price: {product.price} {product.currency}
                   </p>
                 )}
               </div>
@@ -206,28 +235,20 @@ const App = () => {
           })}
         </div>
       ) : (
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <p style={{ color: "red", fontSize: "1.1rem" }}>Ürün bulunamadı.</p>
-        </div>
+        <p style={{ textAlign: "center", color: "red" }}>
+          {searchTerm ? "Aramanızla eşleşen ürün bulunamadı." : "Ürün bulunamadı."}
+        </p>
       )}
 
-      {/* Sepet Bölümü */}
+      
       <div style={{ 
         marginTop: "50px", 
         padding: "25px",
         border: "1px solid #e0e0e0",
         borderRadius: "12px",
-        backgroundColor: "#f8f9fa",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
+        backgroundColor: "#f8f9fa"
       }}>
-        <h2 style={{ 
-          textAlign: "center", 
-          marginBottom: "25px",
-          color: "#333"
-        }}>
-          Sepetiniz
-        </h2>
-        
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Sepetiniz</h2>
         {cart.length > 0 ? (
           <div>
             {cart.map((item) => (
@@ -237,29 +258,16 @@ const App = () => {
                   display: "flex", 
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "15px",
-                  borderBottom: "1px solid #e0e0e0",
-                  ":last-child": {
-                    borderBottom: "none"
-                  }
+                  padding: "10px",
+                  borderBottom: "1px solid #e0e0e0"
                 }}
               >
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: "1.1rem",
-                    color: "#333"
-                  }}>
-                    {item.name}
-                  </h3>
-                  <p style={{ 
-                    margin: "5px 0 0 0",
-                    color: "#666"
-                  }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>{item.name}</h3>
+                  <p style={{ margin: "5px 0" }}>
                     {item.price} {item.currency} × {item.quantity} = {item.price * item.quantity} {item.currency}
                   </p>
                 </div>
-                
                 <button
                   onClick={() => removeFromCart(item.id)}
                   style={{
@@ -268,41 +276,19 @@ const App = () => {
                     border: "none",
                     borderRadius: "4px",
                     padding: "8px 15px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    transition: "background-color 0.2s",
-                    ":hover": {
-                      backgroundColor: "#d32f2f"
-                    }
+                    cursor: "pointer"
                   }}
                 >
                   Kaldır
                 </button>
               </div>
             ))}
-            
-            <div style={{ 
-              marginTop: "25px",
-              paddingTop: "15px",
-              borderTop: "1px solid #ddd",
-              textAlign: "right"
-            }}>
-              <h3 style={{ 
-                fontSize: "1.3rem",
-                color: "#2c3e50"
-              }}>
-                Toplam: {calculateTotalPrice()} {cart[0]?.currency || ''}
-              </h3>
-            </div>
+            <h3 style={{ textAlign: "right", marginTop: "20px" }}>
+              Toplam: {calculateTotalPrice()} {cart[0]?.currency || ''}
+            </h3>
           </div>
         ) : (
-          <p style={{ 
-            textAlign: "center", 
-            color: "#666",
-            fontSize: "1.1rem"
-          }}>
-            Sepetiniz boş.
-          </p>
+          <p style={{ textAlign: "center" }}>Sepetiniz boş.</p>
         )}
       </div>
     </div>
