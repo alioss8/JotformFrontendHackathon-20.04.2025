@@ -6,7 +6,7 @@ Please fill in your information after forking this repository:
 - **Name**: [ali osman ılık]
 
 ## Project Description
-[Add a brief description of your project here]
+Basit bir sepet form uygulaması yaptım ama bağzı eksilkleri var imgleri göstertemedim
 
 ## Getting Started
 [Add instructions for setting up and running the project]
