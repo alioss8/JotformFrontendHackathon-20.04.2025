@@ -10,6 +10,15 @@ const App = () => {
   const apiKey = "1bd04b0cb7e62c17a93d891d67b80344";
   const endpoint = `https://api.jotform.com/form/${formID}/payment-info?apiKey=${apiKey}`;
 
+  // Sepeti localStorage'dan yükle
+  useEffect(() => {
+    const savedCart = JSON.parse(localStorage.getItem('cart'));
+    if (savedCart) {
+      setCart(savedCart);
+    }
+  }, []);
+
+  // Ürünleri yükle
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -32,37 +41,58 @@ const App = () => {
     fetchProducts();
   }, [endpoint]);
 
+  // Sepet güncelleme ve localStorage'a kaydetme
+  const updateCart = (newCart) => {
+    setCart(newCart);
+    localStorage.setItem('cart', JSON.stringify(newCart));
+  };
+
   const addToCart = (product) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
-      return existing
+      const newCart = existing
         ? prev.map(item => 
             item.id === product.id
               ? { ...item, quantity: item.quantity + 1 }
               : item
           )
         : [...prev, { ...product, quantity: 1 }];
+      
+      updateCart(newCart);
+      return newCart;
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
+    setCart(prev => {
+      const newCart = prev.filter(item => item.id !== productId);
+      updateCart(newCart);
+      return newCart;
+    });
   };
 
   const increaseQuantity = (productId) => {
-    setCart(prev => prev.map(item => 
-      item.id === productId
-        ? { ...item, quantity: item.quantity + 1 }
-        : item
-    ));
+    setCart(prev => {
+      const newCart = prev.map(item => 
+        item.id === productId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+      updateCart(newCart);
+      return newCart;
+    });
   };
 
   const decreaseQuantity = (productId) => {
-    setCart(prev => prev.map(item => 
-      item.id === productId && item.quantity > 1
-        ? { ...item, quantity: item.quantity - 1 }
-        : item
-    ));
+    setCart(prev => {
+      const newCart = prev.map(item => 
+        item.id === productId && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      );
+      updateCart(newCart);
+      return newCart;
+    });
   };
 
   const calculateTotalPrice = () => {
@@ -85,10 +115,16 @@ const App = () => {
       total: item.price * item.quantity,
     }));
 
+    // Jotform'a gönderilecek doğru veri formatı
+    const answers = formData.map(item => ({
+      name: item.product_name,
+      answer: `${item.quantity} x ${item.price} = ${item.total}`,
+    }));
+
     const payload = {
       submission: {
         form_id: formID,
-        answers: formData,
+        answers: answers, // Doğru formatta answers
       },
     };
 
@@ -102,15 +138,16 @@ const App = () => {
       });
 
       const result = await response.json();
+
       if (response.ok) {
         alert("Sepet başarıyla gönderildi!");
       } else {
         console.error("Hata:", result);
-        alert("Sepet gönderilemedi.");
+        alert("Sepet gönderilemedi. Detaylar: " + result.message);
       }
     } catch (error) {
       console.error("Gönderme hatası:", error);
-      alert("Sepet gönderilemedi.");
+      alert("Sepet gönderilemedi. Lütfen tekrar deneyin.");
     }
   };
 
@@ -229,6 +266,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
