@@ -6,7 +6,7 @@ Please fill in your information after forking this repository:
 - **Name**: [ali osman ılık]
 
 ## Project Description
-Basit bir sepet form uygulaması yaptım ama bağzı eksilkleri var imgleri göstertemedim
+Basit bir sepet form uygulaması yaptım sepetteki ürünleri submit edip forma yolladım ama submit boş gidiyor
 
 ## Getting Started
 Projenin Kopyalanması:
