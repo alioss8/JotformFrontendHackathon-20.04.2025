@@ -6,6 +6,7 @@ const App = () => {
   const [cart, setCart] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [quantities, setQuantities] = useState({});
 
   const formID = "251074309767967";
   const apiKey = "1bd04b0cb7e62c17a93d891d67b80344";
@@ -16,16 +17,21 @@ const App = () => {
       try {
         const response = await fetch(endpoint);
         const data = await response.json();
-        
+
         if (data?.content?.products) {
-          setProducts(
-            data.content.products.map((p, i) => ({
-              ...p,
-              id: p.id || `product-${i}`,
-            }))
-          );
+          const fetchedProducts = data.content.products.map((p, i) => ({
+            ...p,
+            id: p.id || `product-${i}`,
+          }));
+          setProducts(fetchedProducts);
+
+          // Tüm ürünler için varsayılan quantity: 1
+          const initialQuantities = {};
+          fetchedProducts.forEach(product => {
+            initialQuantities[product.id] = 1;
+          });
+          setQuantities(initialQuantities);
         }
-        
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       } finally {
@@ -34,18 +40,19 @@ const App = () => {
     };
 
     fetchProducts();
-  }, [endpoint]);
+  }, []);
 
   const addToCart = (product) => {
+    const quantity = quantities[product.id] || 1;
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
-      return existing 
-        ? prev.map(item => 
-            item.id === product.id 
-              ? { ...item, quantity: item.quantity + 1 } 
+      return existing
+        ? prev.map(item =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + quantity }
               : item
           )
-        : [...prev, { ...product, quantity: 1 }];
+        : [...prev, { ...product, quantity }];
     });
   };
 
@@ -61,7 +68,14 @@ const App = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  // filtreleme işlemi
+  const handleQuantityChange = (productId, change) => {
+    setQuantities(prev => {
+      const current = prev[productId] || 1;
+      const updated = Math.max(1, current + change);
+      return { ...prev, [productId]: updated };
+    });
+  };
+
   const filteredProducts = products.filter(product => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -71,16 +85,16 @@ const App = () => {
   });
 
   return (
-    <div style={{ 
-      padding: "20px", 
-      fontFamily: "Arial", 
-      maxWidth: "1200px", 
+    <div style={{
+      padding: "20px",
+      fontFamily: "Arial",
+      maxWidth: "1200px",
       margin: "0 auto",
       minHeight: "100vh"
     }}>
       <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Ürünler</h1>
 
-      // search bar 
+      {/* Arama */}
       <div style={{
         margin: "0 auto 30px auto",
         maxWidth: "500px",
@@ -124,14 +138,14 @@ const App = () => {
       {loading ? (
         <p style={{ textAlign: "center" }}>Yükleniyor...</p>
       ) : filteredProducts.length > 0 ? (
-        <div style={{ 
-          display: "grid", 
+        <div style={{
+          display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
           gap: "25px",
           padding: "10px"
         }}>
           {filteredProducts.map((product) => {
-            const imageUrl = product.images || product.images?.large || product.images?.medium;
+            const imageUrl = product.image || product.images?.large || product.images?.medium;
             const finalImageUrl = imageUrl?.split('?')[0];
             const isExpanded = expandedProduct === product.id;
 
@@ -162,7 +176,7 @@ const App = () => {
                     <img
                       src={finalImageUrl}
                       alt={product.name}
-                      style={{ 
+                      style={{
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
@@ -171,10 +185,10 @@ const App = () => {
                     />
                   </div>
                 ) : (
-                  <div style={{ 
-                    height: "200px", 
-                    display: "flex", 
-                    alignItems: "center", 
+                  <div style={{
+                    height: "200px",
+                    display: "flex",
+                    alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: "#f5f5f5",
                     borderRadius: "8px",
@@ -187,13 +201,51 @@ const App = () => {
                 <h2 style={{ margin: "0 0 10px 0", fontSize: "1.2rem" }}>
                   {product.name}
                 </h2>
-                
+
                 {isExpanded && (
                   <>
                     <p style={{ margin: "0 0 15px 0", color: "#555" }}>
                       {product.description || "Açıklama bulunmamaktadır."}
                     </p>
-                    
+
+                    {/* Sayaç */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "15px"
+                    }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuantityChange(product.id, -1);
+                        }}
+                        style={{
+                          padding: "5px 10px",
+                          fontSize: "1.2rem",
+                          borderRadius: "6px",
+                          border: "1px solid #ccc",
+                          background: "#fff",
+                          cursor: "pointer"
+                        }}
+                      >−</button>
+                      <span>{quantities[product.id]}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuantityChange(product.id, 1);
+                        }}
+                        style={{
+                          padding: "5px 10px",
+                          fontSize: "1.2rem",
+                          borderRadius: "6px",
+                          border: "1px solid #ccc",
+                          background: "#fff",
+                          cursor: "pointer"
+                        }}
+                      >+</button>
+                    </div>
+
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -202,7 +254,7 @@ const App = () => {
                       <p style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
                         Price: {product.price} {product.currency}
                       </p>
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -240,9 +292,9 @@ const App = () => {
         </p>
       )}
 
-      
-      <div style={{ 
-        marginTop: "50px", 
+      {/* Sepet */}
+      <div style={{
+        marginTop: "50px",
         padding: "25px",
         border: "1px solid #e0e0e0",
         borderRadius: "12px",
@@ -252,10 +304,10 @@ const App = () => {
         {cart.length > 0 ? (
           <div>
             {cart.map((item) => (
-              <div 
-                key={item.id} 
-                style={{ 
-                  display: "flex", 
+              <div
+                key={item.id}
+                style={{
+                  display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "10px",
@@ -296,6 +348,8 @@ const App = () => {
 };
 
 export default App;
+
+
 
 
 
