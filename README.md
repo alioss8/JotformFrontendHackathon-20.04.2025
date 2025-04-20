@@ -9,7 +9,14 @@ Please fill in your information after forking this repository:
 Basit bir sepet form uygulaması yaptım ama bağzı eksilkleri var imgleri göstertemedim
 
 ## Getting Started
-[Add instructions for setting up and running the project]
+Projenin Kopyalanması:
+git clone <https://github.com/alioss8/JotformFrontendHackathon-20.04.2025/tree/main/alioss-hackathon>
+cd proje_klasoru
+Bağımlılıkların Yüklenmesi:
+npm install
+Uygulamanın Başlatılması:
+npm run dev
+
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
