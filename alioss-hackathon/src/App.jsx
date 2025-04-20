@@ -45,11 +45,30 @@ const App = () => {
     });
   };
 
+  const removeFromCart = (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const increaseQuantity = (productId) => {
+    setCart(prev => prev.map(item => 
+      item.id === productId
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    ));
+  };
+
+  const decreaseQuantity = (productId) => {
+    setCart(prev => prev.map(item => 
+      item.id === productId && item.quantity > 1
+        ? { ...item, quantity: item.quantity - 1 }
+        : item
+    ));
+  };
+
   const calculateTotalPrice = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  // Search functionality
   const filteredProducts = products.filter(product => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -130,7 +149,7 @@ const App = () => {
                 <p style={{ margin: "0 0 15px 0", color: "#555" }}>{product.description || "Açıklama bulunmamaktadır."}</p>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <p style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
-                    Price: {product.price} {product.currency}
+                    Fiyat: {product.price} {product.currency}
                   </p>
                   <button
                     onClick={() => addToCart(product)}
@@ -171,6 +190,11 @@ const App = () => {
                     {item.price} {item.currency} × {item.quantity} = {item.price * item.quantity} {item.currency}
                   </p>
                 </div>
+                <div>
+                  <button onClick={() => increaseQuantity(item.id)} style={{ marginRight: "10px", padding: "5px 10px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "6px" }}>+</button>
+                  <button onClick={() => decreaseQuantity(item.id)} style={{ marginRight: "10px", padding: "5px 10px", backgroundColor: "#FF5722", color: "white", border: "none", borderRadius: "6px" }}>-</button>
+                  <button onClick={() => removeFromCart(item.id)} style={{ padding: "5px 10px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "6px" }}>Sil</button>
+                </div>
               </div>
             ))}
             <h3 style={{ textAlign: "right", marginTop: "20px" }}>
@@ -205,6 +229,8 @@ const App = () => {
 };
 
 export default App;
+
+
 
 
 
