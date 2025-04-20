@@ -9,12 +9,12 @@ Please fill in your information after forking this repository:
 Basit bir sepet form uygulaması yaptım sepetteki ürünleri submit edip forma yolladım ama submit boş gidiyor
 
 ## Getting Started
-Projenin Kopyalanması:
+##Projenin Kopyalanması:
 git clone <https://github.com/alioss8/JotformFrontendHackathon-20.04.2025/tree/main/alioss-hackathon>
 cd proje_klasoru
-Bağımlılıkların Yüklenmesi:
+##Bağımlılıkların Yüklenmesi:
 npm install
-Uygulamanın Başlatılması:
+##Uygulamanın Başlatılması:
 npm run dev
 
 
